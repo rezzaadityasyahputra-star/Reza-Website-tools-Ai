@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>rezToolsAi - Navigation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            /* Menggunakan dvh agar pas dengan layar HP yang punya address bar */
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            overflow-x: hidden; /* Mencegah scroll horizontal */
+        }
+
+        /* --- Navbar --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            animation: fadeInDown 0.8s ease-out;
+            flex-shrink: 0; /* Navbar tidak akan gepeng */
+        }
+
+        .exit-link { color: rgba(255, 255, 255, 0.7); text-decoration: none; font-size: 20px; transition: 0.3s; }
+
+        .brand-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #fff, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .warn-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 159, 67, 0.5);
+            color: #ff9f43;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* --- Chat AI Container --- */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 92%;
+            max-width: 800px;
+            margin: 0 auto 20px auto; /* Memberi jarak bawah agar tidak mentok */
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden; /* Menjaga isi tetap di dalam radius border */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            /* Scroll smooth */
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background: rgba(108, 92, 231, 0.2);
+            border-left: 4px solid #6c5ce7;
+            border-bottom-left-radius: 2px;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: #6c5ce7;
+            border-bottom-right-radius: 2px;
+        }
+
+        /* Input Area */
+        .chat-input-area {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 15px;
+            border-radius: 25px;
+            color: white;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .send-btn {
+            background: #6c5ce7;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            flex-shrink: 0; /* Tombol tidak akan gepeng */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.4);
+        }
+
+        /* --- Typing Indicator --- */
+        .typing { 
+            font-size: 0.75rem; 
+            color: #a29bfe; 
+            padding: 5px 20px;
+            display: none; 
+        }
+
+        /* --- Modal --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mobile Adjustments */
+        @media (max-width: 480px) {
+            .brand-name { font-size: 1.1rem; }
+            .chat-container { width: 95%; margin-bottom: 10px; }
+            .message { max-width: 90%; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="https://google.com" class="exit-link"><i class="fas fa-sign-out-alt"></i></a>
+        <div class="brand-name">rezToolsAi</div>
+        <button class="warn-btn" onclick="toggleModal(true)"><i class="fas fa-shield-virus"></i></button>
+    </nav>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chat-box">
+            <div class="message ai-message">Halo! Ada yang bisa saya bantu hari ini?</div>
+        </div>
+        
+        <div id="typing-indicator" class="typing">rezToolsAi sedang mengetik...</div>
+
+        <div class="chat-input-area">
+            <div class="input-wrapper">
+                <input type="text" id="user-input" placeholder="Tanya sesuatu..." onkeypress="handleEnter(event)">
+            </div>
+            <button class="send-btn" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal">
+        <div style="background: #1e1e2e; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #6c5ce7; max-width: 300px;">
+            <i class="fas fa-shield-halved" style="font-size: 40px; color: #ff4757; margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px;">Sistem Terproteksi</h3>
+            <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 20px;">Gunakan layanan ini dengan bijak. Semua aktivitas terpantau sistem.</p>
+            <button onclick="toggleModal(false)" style="background: #6c5ce7; color: white; border: none; padding: 10px 25px; border-radius: 50px; cursor: pointer; width: 100%;">SAYA MENGERTI</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        function scrollToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            appendMessage(query, 'user-message');
+            userInput.value = '';
+            
+            typingIndicator.style.display = 'block';
+            scrollToBottom();
+
+            try {
+                const response = await fetch(`https://api.sxtream.my.id/ai/toolbot?query=${encodeURIComponent(query)}&system=REZ-BOT+ENGINE`);
+                const data = await response.json();
+                
+                typingIndicator.style.display = 'none';
+                if (data.status) {
+                    typeWriter(data.result, 'ai-message');
+                } else {
+                    appendMessage("Maaf, terjadi kesalahan koneksi.", 'ai-message');
+                }
+            } catch (error) {
+                typingIndicator.style.display = 'none';
+                appendMessage("Gagal menghubungi server.", 'ai-message');
+            }
+        }
+
+        function appendMessage(text, className) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${className}`;
+            msgDiv.innerHTML = text;
+            chatBox.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function typeWriter(text, className) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${className}`;
+            chatBox.appendChild(msgDiv);
+            
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    msgDiv.innerHTML += text.charAt(i);
+                    i++;
+                    scrollToBottom();
+                    setTimeout(type, 15);
+                }
+            }
+            type();
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function toggleModal(show) {
+            document.getElementById('modal').classList.toggle('active', show);
+        }
+    </script>
+</body>
+</html>
